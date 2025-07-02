@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from .app.agent import get_agent_response
 
 app = FastAPI()
 
@@ -10,5 +11,5 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-    # Agent logic will be called here
-    return {"response": f"You said: {request.message}"}
+    response = get_agent_response(request.message, request.session_id)
+    return {"response": response}
