@@ -3,4 +3,4 @@ langchain
 google-api-python-client
 python-dotenv
 google-auth-oauthlib
-langchain-google-
+langchain-google-genai
