@@ -1,6 +1,5 @@
-
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
@@ -27,15 +26,26 @@ def get_calendar_service():
 def check_availability(start_time: str, end_time: str) -> list[str]:
     """Checks for available time slots in the calendar between two datetimes."""
     service = get_calendar_service()
+    
+    # Ensure input datetimes are timezone-aware UTC
     start_time_dt = datetime.fromisoformat(start_time)
+    if start_time_dt.tzinfo is None:
+        start_time_dt = start_time_dt.replace(tzinfo=timezone.utc)
+    else:
+        start_time_dt = start_time_dt.astimezone(timezone.utc)
+
     end_time_dt = datetime.fromisoformat(end_time)
+    if end_time_dt.tzinfo is None:
+        end_time_dt = end_time_dt.replace(tzinfo=timezone.utc)
+    else:
+        end_time_dt = end_time_dt.astimezone(timezone.utc)
 
     events_result = (
         service.events()
         .list(
             calendarId=CALENDAR_ID,
-            timeMin=start_time_dt.isoformat() + "Z",
-            timeMax=end_time_dt.isoformat() + "Z",
+            timeMin=start_time_dt.isoformat(),
+            timeMax=end_time_dt.isoformat(),
             singleEvents=True,
             orderBy="startTime",
         )
@@ -52,8 +62,24 @@ def check_availability(start_time: str, end_time: str) -> list[str]:
             event_start_str = event["start"].get("dateTime", event["start"].get("date"))
             event_end_str = event["end"].get("dateTime", event["end"].get("date"))
 
-            event_start = datetime.fromisoformat(event_start_str) if "dateTime" in event["start"] else datetime.fromisoformat(event_start_str + "T00:00:00")
-            event_end = datetime.fromisoformat(event_end_str) if "dateTime" in event["end"] else datetime.fromisoformat(event_end_str + "T23:59:59")
+            # Convert event times to timezone-aware UTC
+            if "dateTime" in event["start"]:
+                event_start = datetime.fromisoformat(event_start_str)
+                if event_start.tzinfo is None:
+                    event_start = event_start.replace(tzinfo=timezone.utc)
+                else:
+                    event_start = event_start.astimezone(timezone.utc)
+            else: # Date-only event, assume whole day in UTC
+                event_start = datetime.fromisoformat(event_start_str + "T00:00:00").replace(tzinfo=timezone.utc)
+
+            if "dateTime" in event["end"]:
+                event_end = datetime.fromisoformat(event_end_str)
+                if event_end.tzinfo is None:
+                    event_end = event_end.replace(tzinfo=timezone.utc)
+                else:
+                    event_end = event_end.astimezone(timezone.utc)
+            else: # Date-only event, assume whole day in UTC
+                event_end = datetime.fromisoformat(event_end_str + "T23:59:59").replace(tzinfo=timezone.utc)
 
             # Check for overlap
             if not (slot_end_time <= event_start or current_time >= event_end):
@@ -64,7 +90,7 @@ def check_availability(start_time: str, end_time: str) -> list[str]:
             available_slots.append(current_time.isoformat())
         
         current_time += timedelta(minutes=30)
-    print(f"Available slots: {available_slots}")  # Print available slots for debugging
+
     return available_slots
 
 def create_appointment(start_time: str, end_time: str, summary: str) -> str:
@@ -86,8 +112,11 @@ def create_appointment(start_time: str, end_time: str, summary: str) -> str:
     }
 
     created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-
-    # Extracting the event link from event object
-    event_link = created_event.get('htmlLink')
+    print(f"Created Event: {created_event}") # Print the full event object
     
-    return f"Appointment created: {event_link}"
+    # Construct a generic Google Calendar event link using the event ID and calendar ID
+    event_id = created_event.get('id')
+    calendar_id_encoded = CALENDAR_ID.replace('@', '%40') # Encode @ for URL
+    generic_link = f"https://calendar.google.com/calendar/event?eid={event_id}"
+
+    return f"Appointment created: {generic_link}"

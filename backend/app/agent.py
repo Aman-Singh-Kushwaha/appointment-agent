@@ -2,9 +2,8 @@ import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.memory import ConversationBufferMemory
 from .calendar_tools import check_availability, create_appointment
 
@@ -36,34 +35,29 @@ tools = [check_calendar_availability, create_calendar_appointment]
 # Define the prompt template for the agent
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful receptionist. Your goal is to assist users in booking appointments on their Google Calendar. Be polite and confirm details before booking."),
-    ("placeholder", "{chat_history}"),
+    MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
-    ("placeholder", "{agent_scratchpad}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
-
-# Create the agent
-agent = create_tool_calling_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 # In-memory store for conversation history
 store = {}
 
-def get_session_history(session_id: str):
-    if session_id not in store:
-        store[session_id] = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
-    return store[session_id]
-
-with_message_history = RunnableWithMessageHistory(
-    agent_executor,
-    get_session_history,
-    input_messages_key="input",
-    history_messages_key="chat_history",
-)
-
 def get_agent_response(query: str, session_id: str) -> str:
     """Gets a response from the LangChain agent with conversation history."""
-    response = with_message_history.invoke(
-        {"input": query},
-        config={"configurable": {"session_id": session_id}},
+    if session_id not in store:
+        store[session_id] = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+    
+    memory = store[session_id]
+
+    # Create the agent executor for each call, passing the memory directly
+    agent_executor = AgentExecutor(agent=create_tool_calling_agent(llm, tools, prompt), tools=tools, verbose=True)
+
+    response = agent_executor.invoke(
+        {"input": query, "chat_history": memory.load_memory_variables({})["chat_history"]}
     )
+    
+    # Save the new interaction to memory
+    memory.save_context({"input": query}, {"output": response["output"]})
+
     return response["output"]
