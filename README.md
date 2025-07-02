@@ -45,3 +45,5 @@ Receptionist is a conversational AI assistant that helps users book appointments
 
 ---
 
+>[!NOTE]
+> For adding invitations to attendees, needs service account enabled Domain-Wide Delegation through admin console through organisation admin mail or workspace admin mail.

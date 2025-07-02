@@ -92,7 +92,7 @@ def check_availability(start_time: str, end_time: str) -> list[str]:
 
     return available_slots
 
-def create_appointment(start_time: str, end_time: str, summary: str, ) -> str:
+def create_appointment(start_time: str, end_time: str, summary: str, attendee_email: str = None) -> str:
     """Creates a new event in the calendar."""
     service = get_calendar_service()
     start_time_dt = datetime.fromisoformat(start_time)
@@ -109,6 +109,17 @@ def create_appointment(start_time: str, end_time: str, summary: str, ) -> str:
             "timeZone": "UTC",
         },
     }
+
+    if attendee_email:
+        event["attendees"] = [
+            {
+                "email": attendee_email,
+                "responseStatus": "needsAction"  # They need to respond to the invitation
+            }
+        ]
+        # Config for Send notifications to attendees
+        event["guestsCanSeeOtherGuests"] = False
+        event["guestsCanInviteOthers"] = False
 
     created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
     print(f"Created Event: {created_event}")
