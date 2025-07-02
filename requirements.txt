@@ -1,7 +1,6 @@
-fastapi
-uvicorn
+streamlit
 langchain
 google-api-python-client
 python-dotenv
 google-auth-oauthlib
-langchain-google-genai
+langchain-google-

@@ -9,8 +9,7 @@ load_dotenv()
 # Scopes for Google Calendar API
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
-# Path to your service account key file
-SERVICE_ACCOUNT_FILE = "backend/credentials.json"
+SERVICE_ACCOUNT_FILE = "credentials.json"
 
 # Get calendar ID from environment variable
 CALENDAR_ID = os.getenv("CALENDAR_ID", "primary")
@@ -93,7 +92,7 @@ def check_availability(start_time: str, end_time: str) -> list[str]:
 
     return available_slots
 
-def create_appointment(start_time: str, end_time: str, summary: str) -> str:
+def create_appointment(start_time: str, end_time: str, summary: str, ) -> str:
     """Creates a new event in the calendar."""
     service = get_calendar_service()
     start_time_dt = datetime.fromisoformat(start_time)
@@ -112,11 +111,8 @@ def create_appointment(start_time: str, end_time: str, summary: str) -> str:
     }
 
     created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-    print(f"Created Event: {created_event}") # Print the full event object
-    
-    # Construct a generic Google Calendar event link using the event ID and calendar ID
-    event_id = created_event.get('id')
-    calendar_id_encoded = CALENDAR_ID.replace('@', '%40') # Encode @ for URL
-    generic_link = f"https://calendar.google.com/calendar/event?eid={event_id}"
+    print(f"Created Event: {created_event}")
 
-    return f"Appointment created: {generic_link}"
+    event_link = created_event.get('htmlLink')
+
+    return f"Booking created with event link: {event_link}"

@@ -5,7 +5,9 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain.memory import ConversationBufferMemory
+import datetime
 from .calendar_tools import check_availability, create_appointment
+
 
 load_dotenv()
 
@@ -32,9 +34,11 @@ def create_calendar_appointment(start_time: str, end_time: str, summary: str) ->
 
 tools = [check_calendar_availability, create_calendar_appointment]
 
+today= datetime.datetime.now().isoformat()
+
 # Define the prompt template for the agent
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful receptionist. Your goal is to assist users in booking appointments on their Google Calendar. Be polite and confirm details before booking."),
+    ("system", f"You are a helpful receptionist. Your goal is to assist users in booking appointments on their Google Calendar. Be polite and confirm details before booking. Today's date is {today} use it to to understand yesterday and tomorrow like phrases."),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
