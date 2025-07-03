@@ -8,6 +8,8 @@ venv/
 # Environment Variables
 .env
 credentials.json
+secrets.toml
+!secrets.toml.example
 
 # Documentation
 docs/

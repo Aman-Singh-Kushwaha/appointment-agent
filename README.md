@@ -11,7 +11,7 @@ Receptionist is a conversational AI assistant that helps users book appointments
 ## Setup
 
 1. **Clone the repo and install dependencies:**
-   ```sh
+   ```bash
    git clone https://github.com/Aman-Singh-Kushwaha/appointment-agent.git
    cd appointment-agent
    python -m venv venv
@@ -20,12 +20,13 @@ Receptionist is a conversational AI assistant that helps users book appointments
    ```
 
 2. **Configure environment:**
-   - Copy your Google Cloud service account key credentials to `credentials.json`.
-   - Create a `.env` file with:
-     ```
-     GOOGLE_API_KEY=your_google_api_key
-     CALENDAR_ID=your_calendar_email  # or leave blank for 'primary'
-     ```
+    - Create a  file with:
+      ```bash
+      
+        mv secrets.toml.example secrets.toml
+      ```
+    - Copy your Google Cloud service account key credentials as toml to `secrets.toml`.
+   
 
 3. **Run the app:**
    ```sh
@@ -45,5 +46,5 @@ Receptionist is a conversational AI assistant that helps users book appointments
 
 ---
 
->[!NOTE]
+> [!NOTE]  
 > For adding invitations to attendees, needs service account enabled Domain-Wide Delegation through admin console through organisation admin mail or workspace admin mail.

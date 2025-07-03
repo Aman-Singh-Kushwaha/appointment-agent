@@ -1,5 +1,4 @@
-import os
-from dotenv import load_dotenv
+import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -9,10 +8,9 @@ import datetime
 from app.calendar_tools import check_availability, create_appointment
 
 
-load_dotenv()
 
 # Load Google API Key
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
 # Initialize the LLM
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=GOOGLE_API_KEY)

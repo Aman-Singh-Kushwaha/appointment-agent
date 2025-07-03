@@ -1,24 +1,20 @@
-import os
+import streamlit as st
 from datetime import datetime, timedelta, timezone
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from dotenv import load_dotenv
 
-load_dotenv()
 
 # Scopes for Google Calendar API
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
-SERVICE_ACCOUNT_FILE = "credentials.json"
+SERVICE_ACCOUNT_CREDENTIALS_INFO = st.secrets["google-service-account-credentials"]
 
 # Get calendar ID from environment variable
-CALENDAR_ID = os.getenv("CALENDAR_ID", "primary")
+CALENDAR_ID = st.secrets.get("CALENDAR_ID", "primary")
 
 def get_calendar_service():
     """Authenticates with the Google Calendar API and returns a service object."""
-    creds = Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
-    )
+    creds = Credentials.from_service_account_info( SERVICE_ACCOUNT_CREDENTIALS_INFO , scopes=SCOPES)
     service = build("calendar", "v3", credentials=creds)
     return service
 
